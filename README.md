@@ -4,7 +4,7 @@ This project is an attempt to create a common starting point for building a sing
 
 ## Dependencies
 
-One of the goals of this project is to build a container in as little time as possible. With this in mind a design decision was made to require all dependencies not managed by the base container's package manager be included locally in the ```packages``` directory. This will prevent the necessity of having to download hundreds of additional megabytes of software. This approach also has the added benefit of allowing you to obtain the necessary dependencies from sources you trust.
+One of the goals of this project is to build a container in as little time as possible. With this in mind a design decision was made to require all dependencies not managed by the base container's package manager be included locally in the ```packages``` directory. This will prevent the necessity of having to download hundreds of additional megabytes of software each time a build is attempted. This approach also has the added benefit of allowing you to obtain the necessary dependencies from sources you trust.
 
 This Dockerfile has the following dependencies:
 
