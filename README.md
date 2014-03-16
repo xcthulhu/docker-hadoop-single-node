@@ -68,4 +68,4 @@ For more information on Docker ports see the [Redirect Ports documentation](http
 
 ## 64-bit Support
 
-The implementation of Hadoop provided by this Dockerfile contains 64-bit support. This is why both ```hadoop-common``` and ```protobuf``` are dependencies of this Dockerfile. 
+The implementation of Hadoop provided by this Dockerfile contains 64-bit support.
