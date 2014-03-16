@@ -28,7 +28,7 @@ To start a container in daemon mode run the following command:
 
 For debugging purposes you can view the Hadoop log tails by running a container in interactive mode:
 
-```docker run -i -t sticksnleaves/hadoop-single-node```
+```$> docker run -i -t sticksnleaves/hadoop-single-node```
 
 ## Persistent Storage
 
@@ -62,4 +62,6 @@ YARN
 
 By default Docker will not assign ports publicly. To manually assign ports use the ```-p``` flag when running a container. To assign them automatically use the ```-P``` flag.
 
-For more information on Docker ports see the documentation on [Redirect Ports](http://docs.docker.io/en/latest/use/port_redirection/).
+For more information on Hadoop ports see the [Hortonworks Configuring Ports documentation](http://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.0.9.1/bk_reference/content/reference_chap2.html).
+
+For more information on Docker ports see the [Redirect Ports documentation](http://docs.docker.io/en/latest/use/port_redirection/).
