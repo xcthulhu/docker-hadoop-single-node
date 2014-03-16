@@ -65,3 +65,7 @@ By default Docker will not assign ports publicly. To manually assign ports use t
 For more information on Hadoop ports see the [Hortonworks Configuring Ports documentation](http://docs.hortonworks.com/HDPDocuments/HDP2/HDP-2.0.9.1/bk_reference/content/reference_chap2.html).
 
 For more information on Docker ports see the [Redirect Ports documentation](http://docs.docker.io/en/latest/use/port_redirection/).
+
+## 64-bit Support
+
+The implementation of Hadoop provided by this Dockerfile contains 64-bit support. This is why both ```hadoop-common``` and ```protobuf``` are dependencies of this Dockerfile. 
