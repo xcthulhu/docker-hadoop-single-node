@@ -39,7 +39,7 @@ To persistently store Hadoop data files pass ```/var/lib/hadoop``` to the ```-v`
 For more information regarding Docker volumes and persistent storage view the following articles:
 
 * [Share Directories via Volumes](http://docs.docker.io/en/latest/use/working_with_volumes/)
-* [Advanced Docker Valumes by Michael Crosby](http://crosbymichael.com/advanced-docker-volumes.html)
+* [Advanced Docker Volumes by Michael Crosby](http://crosbymichael.com/advanced-docker-volumes.html)
 
 ## Ports
 
