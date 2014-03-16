@@ -18,6 +18,30 @@ All dependencies are expected to be in the gzip archive format and placed in the
 
 In the directory containing the Dockerfile run the following command:
 
-```docker build -t sticksnleaves/hadoop-single-node .```
+```$> docker build -t sticksnleaves/hadoop-single-node .```
 
-Feel free to replace the container tag specified by ```-t``` to something relevant to your needs.
+Feel free to replace the image tag specified by ```-t``` to something relevant to your needs.
+
+## Running a Container
+
+Run the following command to start the container in daemon mode:
+
+```$> $HADOOP_ID=$(docker run -d -P -t sticksnleaves/hadoop-single-node```)
+
+By default the container will execute the [services/start-hadoop.sh](https://github.com/sticksnleaves/docker-hadoop-single-node/blob/master/services/start-hadoop.sh) script provided with this project. This script starts ```sshd```, HDFS and YARN services and tails all Hadoop logs.
+
+For debugging purposes you can run the container in interactive mode to view the Hadoop log tails by running the following command:
+
+```$> docker run -i -P -t sticksnleaves/hadoop-single-node```
+
+If you'd rather execute something other than the default script run the following command:
+
+```$> docker run -i -P -t sticksnleaves/hadoop-single-node /bin/bash```
+
+Where ```/bin/bash``` is the command to execute (the above example will allow you to access the container's shell).
+
+For perisstant storage pass ```/var/lib/hadoop``` to the ```-v``` flag to add a Docker volume:
+
+```$> docker run -i -P -v /var/lib/hadoop -t sticksnleaves/hadoop-single-node```
+
+For more information on how to manage Docker volumes and persistant storage [view their documentation](http://docs.docker.io/en/latest/use/working_with_volumes/). Also take a look at [Advanced Docker Volumes by Michael Crosby](http://crosbymichael.com/advanced-docker-volumes.html).
