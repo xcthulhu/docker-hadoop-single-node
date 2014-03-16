@@ -9,11 +9,11 @@
   
   <property>
     <name>dfs.namenode.name.dir</name>
-    <value>file:/home/hduser/.hadoop/hdfs/namenode</value>
+    <value>file:/var/lib/hadoop/current/data/hdfs/namenode</value>
   </property>
   
   <property>
     <name>dfs.datanode.name.dir</name>
-    <value>file:/home/hduser/.hadoop/hdfs/datanode</value>
+    <value>file:/var/lib/hadoop/current/data/hdfs/datanode</value>
   </property>
 </configuration>
