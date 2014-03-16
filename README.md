@@ -20,28 +20,46 @@ In the directory containing the Dockerfile run the following command:
 
 ```$> docker build -t sticksnleaves/hadoop-single-node .```
 
-Feel free to replace the image tag specified by ```-t``` to something relevant to your needs.
-
 ## Running a Container
 
-Run the following command to start the container in daemon mode:
+To start a container in daemon mode run the following command:
 
-```$> $HADOOP_ID=$(docker run -d -P -t sticksnleaves/hadoop-single-node)```
+```$> $HADOOP_ID=$(docker run -d -t sticksnleaves/hadoop-single-node)```
 
-By default the container will execute the [services/start-hadoop.sh](https://github.com/sticksnleaves/docker-hadoop-single-node/blob/master/services/start-hadoop.sh) script provided by this project. This script starts ```sshd```, HDFS and YARN services and tails all Hadoop logs.
+For debugging purposes you can view the Hadoop log tails by running a container in interactive mode:
 
-For debugging purposes you can run the container in interactive mode to view the Hadoop log tails by running the following command:
+```docker run -i -t sticksnleaves/hadoop-single-node```
 
-```$> docker run -i -P -t sticksnleaves/hadoop-single-node```
+## Persistent Storage
 
-If you'd rather execute something other than the default script run the following command:
+All non-config data files are stored in ```/var/lib/hadoop/VERSION/data``` within a container. The data files are broken down based on Hadoop version and then referenced by the ```current``` symlink. Hadoop 2.3.0 would be located at ```/var/lib/hadoop/2.3.0/data``` and then symlinked to ```/var/lib/hadoop/current/data```. This is for maintainability and predictability purposes independent of the actual version of Hadoop used.
 
-```$> docker run -i -P -t sticksnleaves/hadoop-single-node /bin/bash```
+To persistently store Hadoop data files pass ```/var/lib/hadoop``` to the ```-v``` flag when running a container.
 
-Where ```/bin/bash``` is the command to execute (the above example will allow you to access the container's shell).
+For more information regarding Docker volumes and persistent storage view the following articles:
 
-For perisstant storage pass ```/var/lib/hadoop``` to the ```-v``` flag to add a Docker volume:
+* [Share Directories via Volumes](http://docs.docker.io/en/latest/use/working_with_volumes/)
+* [Advanced Docker Valumes by Michael Crosby](http://crosbymichael.com/advanced-docker-volumes.html)
 
-```$> $HADOOP_ID=$(docker run -d -P -v /var/lib/hadoop -t sticksnleaves/hadoop-single-node)```
+## Ports
 
-For more information on how to manage Docker volumes and persistant storage [view the documentation](http://docs.docker.io/en/latest/use/working_with_volumes/). Also take a look at [Advanced Docker Volumes by Michael Crosby](http://crosbymichael.com/advanced-docker-volumes.html).
+This Dockerfile exposes the following ports:
+
+HDFS
+* 50070
+* 50470
+* 9000
+* 50075
+* 50475
+* 50010
+* 50020
+* 50090
+
+YARN
+* 8088
+* 8032
+* 50060
+
+By default Docker will not assign ports publicly. To manually assign ports use the ```-p``` flag when running a container. To assign them automatically use the ```-P``` flag.
+
+For more information on Docker ports see the documentation on [Redirect Ports](http://docs.docker.io/en/latest/use/port_redirection/).
