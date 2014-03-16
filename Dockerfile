@@ -123,6 +123,10 @@ RUN su hduser -c "$HADOOP_HOME/bin/hdfs namenode -format"
 ADD services/start-hadoop.sh ./start-hadoop.sh
 RUN mv ./start-hadoop.sh /usr/local/hadoop/bin/start-hadoop.sh
 
-EXPOSE 50070 50075 50090 50105 50030 50060
+# HDFS ports
+EXPOSE 50070 50470 9000 50075 50475 50010 50020 50090
+
+# YARN ports
+EXPOSE 8088 8032 50060
 
 CMD ["/bin/bash", "start-hadoop.sh"]
