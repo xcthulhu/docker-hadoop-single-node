@@ -69,3 +69,40 @@ For more information on Docker ports see the [Redirect Ports documentation](http
 ## 64-bit Support
 
 The implementation of Hadoop provided by this Dockerfile contains 64-bit support.
+
+# nsenter instead of ssh
+
+## What is nsenter?
+
+nsenter is a small tool allowing to enter into namespaces. Technically, it can enter existing 
+namespaces, or spawn a process into a new set of namespaces. "What are those namespaces you're 
+blabbering about?" They are one of the essential constituants of containers.
+
+## Installation
+
+Running the following command installs nsenter in your host environment (where docker is run).
+
+```
+docker run -v /usr/local/bin:/target jpetazzo/nsenter
+```
+
+## Usage
+
+
+```
+./hadoop_shell.sh
+```
+
+Now you are inside the hadoop instance at the command line. The first step is to switch
+from root to the hduser.
+
+```
+$ su hduser
+$ cd /usr/local/hadoop
+$ bin/hdfs dfs -put LICENSE.txt /
+$ bin/hdfs dfs -ls /
+Found 1 items
+-rw-r--r--   1 hduser supergroup      13366 2014-06-27 19:41 /LICENSE.txt
+$ exit
+````
+
