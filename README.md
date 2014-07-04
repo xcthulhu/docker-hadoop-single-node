@@ -17,8 +17,8 @@ this repository, run the following commands.
 
 ```
 cd packages
-wget http://mirrors.gigenet.com/apache/hadoop/common/hadoop-2.3.0/hadoop-2.3.0.tar.gz
 wget https://github.com/apache/hadoop-common/archive/release-2.3.0.tar.gz
+wget http://mirrors.gigenet.com/apache/hadoop/common/hadoop-2.3.0/hadoop-2.3.0.tar.gz -O hadoop-common-release-2.3.0.tar.gz
 wget https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
 ```
 
