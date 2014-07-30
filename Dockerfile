@@ -1,28 +1,28 @@
 #
-# Copyright (c) 2014 Sticksnleaves
+# Copyright (c) 2014 Sticksnleaves & xcthulhu
 #
-# Apache Hadoop 2.3.0 single node install
+# Apache Hadoop 2.4.1 single node install
 #
 
-FROM ubuntu:12.10
-MAINTAINER Anthony Smith
+FROM ubuntu:12.04
+MAINTAINER Matthew Wampler-Doty
 
 # Prepare the operating system
 RUN apt-get update
-RUN apt-get upgrade -y
 
 # Install dependencies
 RUN apt-get install -y llvm-gcc build-essential make cmake automake autoconf libtool zlib1g-dev
 
 # Prepare fuse for JDK install
 RUN apt-get install -y libfuse2
-RUN cd /tmp ; apt-get download fuse
-RUN cd /tmp ; dpkg-deb -x fuse_* .
-RUN cd /tmp ; dpkg-deb -e fuse_*
-RUN cd /tmp ; rm fuse_*.deb
-RUN cd /tmp ; echo -en '#!/bin/bash\nexit 0\n' > DEBIAN/postinst
-RUN cd /tmp ; dpkg-deb -b . /fuse.deb
-RUN cd /tmp ; dpkg -i /fuse.deb
+WORKDIR /tmp
+RUN apt-get download fuse
+RUN dpkg-deb -x fuse_* .
+RUN dpkg-deb -e fuse_*
+RUN echo -en '#!/bin/bash\nexit 0\n' > DEBIAN/postinst
+RUN dpkg-deb -b . /fuse.deb
+RUN dpkg -i /fuse.deb
+RUN rm -r /tmp/fuse*
 
 # Install Java dependencies
 ENV JAVA_HOME /usr/lib/jvm/jdk
@@ -33,25 +33,46 @@ RUN ln -s /usr/lib/jvm/java-7-openjdk-amd64 $JAVA_HOME
 RUN addgroup hadoop
 RUN useradd -d /home/hduser -m -s /bin/bash -G hadoop hduser
 
-# Configure SSH
-RUN apt-get install -y openssh-server
-RUN mkdir /var/run/sshd
-RUN su hduser -c "ssh-keygen -t rsa -f ~/.ssh/id_rsa -P ''"
-RUN su hduser -c "cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys"
-ADD config/ssh_config ./ssh_config
-RUN mv ./ssh_config /home/hduser/.ssh/config
-
 # Setup Hadoop
 ENV HADOOP_HOME /usr/local/hadoop
 ENV HADOOP_DATA /var/lib/hadoop
-ADD packages/hadoop-2.3.0.tar.gz ./hadoop-2.3.0.tar.gz
-RUN mv hadoop-2.3.0.tar.gz/hadoop-2.3.0 /usr/local/hadoop-2.3.0
-RUN ln -s /usr/local/hadoop-2.3.0 $HADOOP_HOME
-RUN rm -rf hadoop-2.3.0.tar.gz
+RUN apt-get install -y wget
+RUN wget https://archive.apache.org/dist/hadoop/core/hadoop-2.4.1/hadoop-2.4.1.tar.gz
+RUN tar zxfv hadoop-2.4.1.tar.gz -C /usr/local
+RUN ln -s /usr/local/hadoop-2.4.1 $HADOOP_HOME
+RUN rm hadoop-2.4.1.tar.gz
 RUN mkdir $HADOOP_HOME/logs
-RUN mkdir -p $HADOOP_DATA/2.3.0/data
+RUN mkdir -p $HADOOP_DATA/2.4.1/data
 RUN mkdir -p $HADOOP_DATA/current/data
-RUN ln -s $HADOOP_DATA/2.3.0/data $HADOOP_DATA/current/data
+RUN ln -s $HADOOP_DATA/2.4.1/data $HADOOP_DATA/current/data
+
+# Build protobuf
+RUN wget https://protobuf.googlecode.com/files/protobuf-2.5.0.tar.gz
+RUN tar zxfv protobuf-2.5.0.tar.gz
+RUN cd protobuf-2.5.0 ; \
+    ./configure --prefix=/usr/local ; \
+    make ; \
+    make install
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/lib
+RUN ldconfig
+RUN protoc --version
+RUN rm -r /tmp/protobuf-2.5.0/
+RUN rm /tmp/protobuf-2.5.0.tar.gz
+
+# Build Hadoop Common
+RUN wget https://github.com/apache/hadoop-common/archive/release-2.4.1.tar.gz
+RUN tar zxfv release-2.4.1.tar.gz
+RUN ls -al hadoop-common-release-2.4.1/
+RUN cd hadoop-common-release-2.4.1/hadoop-common-project/hadoop-common ; mvn package -X -Pnative -DskipTests
+RUN mv $HADOOP_HOME/lib/native/libhadoop.a $HADOOP_HOME/lib/native/libhadoop32.a
+RUN mv $HADOOP_HOME/lib/native/libhadoop.so $HADOOP_HOME/lib/native/libhadoop32.so
+RUN mv $HADOOP_HOME/lib/native/libhadoop.so.1.0.0 $HADOOP_HOME/lib/native/libhadoop32.so.1.0.0
+RUN cd hadoop-common-release-2.4.1/hadoop-common-project/hadoop-common/target/native/target/usr/local/lib ; \
+    mv libhadoop.a $HADOOP_HOME/lib/native/libhadoop.a ; \
+    mv libhadoop.so $HADOOP_HOME/lib/native/libhadoop.so ; \
+    mv libhadoop.so.1.0.0 $HADOOP_HOME/lib/native/libhadoop.so.1.0.0
+RUN rm -r /tmp/hadoop-common-release-2.4.1/
+RUN rm /tmp/release-2.4.1.tar.gz
 
 # Export Hadoop environment variables
 ENV PATH $PATH:$HADOOP_HOME/bin
@@ -69,46 +90,36 @@ RUN echo "export HADOOP_COMMON_HOME=$HADOOP_COMMON_HOME" >> /home/hduser/.bashrc
 RUN echo "export HADOOP_HDFS_HOME=$HADOOP_HDFS_HOME" >> /home/hduser/.bashrc
 RUN echo "export YARN_HOME=$YARN_HOME" >> /home/hduser/.bashrc
 
+# Configure SSH
+RUN apt-get install -y openssh-server
+RUN mkdir /var/run/sshd
+RUN su hduser -c "ssh-keygen -t rsa -f ~/.ssh/id_rsa -P ''"
+RUN su hduser -c "cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys"
+ADD config/ssh_config /home/hduser/.ssh/config 
+
 # Configure HDFS
-ADD config/core-site.xml ./core-site.xml
-ADD config/hdfs-site.xml ./hdfs-site.xml
-ADD config/hadoop-env.sh ./hadoop-env.sh
-RUN rm -f $HADOOP_HOME/etc/hadoop/core-site.xml
-RUN rm -f $HADOOP_HOME/etc/hadoop/hdfs-site.xml
-RUN rm -f $HADOOP_HOME/etc/hadoop/hadoop-env.sh
-RUN mv ./core-site.xml $HADOOP_HOME/etc/hadoop/core-site.xml
-RUN mv ./hdfs-site.xml $HADOOP_HOME/etc/hadoop/hdfs-site.xml
-RUN mv ./hadoop-env.sh $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+ADD config/core-site.xml /tmp/core-site.xml
+ADD config/hdfs-site.xml /tmp/hdfs-site.xml
+ADD config/hadoop-env.sh /tmp/hadoop-env.sh
+RUN rm $HADOOP_HOME/etc/hadoop/core-site.xml
+RUN rm $HADOOP_HOME/etc/hadoop/hdfs-site.xml
+RUN rm $HADOOP_HOME/etc/hadoop/hadoop-env.sh
+RUN mv /tmp/core-site.xml $HADOOP_HOME/etc/hadoop/core-site.xml
+RUN mv /tmp/hdfs-site.xml $HADOOP_HOME/etc/hadoop/hdfs-site.xml
+RUN mv /tmp/hadoop-env.sh $HADOOP_HOME/etc/hadoop/hadoop-env.sh
 RUN mkdir -p $HADOOP_DATA/current/data/hdfs/namenode
 RUN mkdir -p $HADOOP_DATA/current/data/hdfs/datanode
 
 # Configure YARN
-ADD config/yarn-site.xml ./yarn-site.xml
-ADD config/mapred-site.xml ./mapred-site.xml
-RUN rm -f $HADOOP_HOME/etc/hadoop/yarn-site.xml
-RUN mv ./yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml
-RUN mv ./mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml
+ADD config/yarn-site.xml /tmp/yarn-site.xml
+ADD config/mapred-site.xml /tmp/mapred-site.xml
+RUN rm $HADOOP_HOME/etc/hadoop/yarn-site.xml
+RUN mv /tmp/yarn-site.xml $HADOOP_HOME/etc/hadoop/yarn-site.xml
+RUN mv /tmp/mapred-site.xml $HADOOP_HOME/etc/hadoop/mapred-site.xml
 
-# Build protobuf
-ADD packages/protobuf-2.5.0.tar.gz ./protobuf-2.5.0.tar.gz
-RUN cd protobuf-2.5.0.tar.gz/protobuf-2.5.0 ; \
-    ./configure --prefix=/usr/local ; \
-    make ; \
-    make install
-RUN rm -rf protobuf-2.5.0*
-ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/local/lib
-
-# Build Hadoop Common
-ADD packages/hadoop-common-release-2.3.0.tar.gz ./hadoop-common-release-2.3.0.tar.gz 
-RUN cd hadoop-common-release-2.3.0.tar.gz/hadoop-common-release-2.3.0/hadoop-common-project ; mvn package -X -Pnative -DskipTests
-RUN mv $HADOOP_HOME/lib/native/libhadoop.a $HADOOP_HOME/lib/native/libhadoop32.a
-RUN mv $HADOOP_HOME/lib/native/libhadoop.so $HADOOP_HOME/lib/native/libhadoop32.so
-RUN mv $HADOOP_HOME/lib/native/libhadoop.so.1.0.0 $HADOOP_HOME/lib/native/libhadoop32.so.1.0.0
-RUN cd hadoop-common-release-2.3.0.tar.gz/hadoop-common-release-2.3.0/hadoop-common-project/hadoop-common/target/native/target/usr/local/lib ; \
-    mv libhadoop.a $HADOOP_HOME/lib/native/libhadoop.a ; \
-    mv libhadoop.so $HADOOP_HOME/lib/native/libhadoop.so ; \
-    mv libhadoop.so.1.0.0 $HADOOP_HOME/lib/native/libhadoop.so.1.0.0
-RUN rm -rf hadoop-common-release-2.3.0.tar.gz
+# Copy start-hadoop script
+ADD services/start-hadoop.sh /tmp/start-hadoop.sh
+RUN mv /tmp/start-hadoop.sh $HADOOP/bin/start-hadoop.sh
 
 # Configure directory ownership
 RUN chown -R hduser:hduser /home/hduser
@@ -118,10 +129,6 @@ RUN chmod 1777 /tmp
 
 # Format namenode
 RUN su hduser -c "$HADOOP_HOME/bin/hdfs namenode -format"
-
-# Copy start-hadoop script
-ADD services/start-hadoop.sh ./start-hadoop.sh
-RUN mv ./start-hadoop.sh /usr/local/hadoop/bin/start-hadoop.sh
 
 # HDFS ports
 EXPOSE 50070 50470 9000 50075 50475 50010 50020 50090

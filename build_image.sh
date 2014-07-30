@@ -1,3 +1,3 @@
 #!/bin/bash
 
-docker build --rm=true -t sticksnleaves/hadoop-single-node .
+docker build --rm=true -t xcthulhu/hadoop-single-node .
